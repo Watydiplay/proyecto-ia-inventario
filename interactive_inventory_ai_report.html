@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Interactivo: Proyecto de IA para Inventarios</title>
+    <!-- Chosen Palette: Warm Neutrals & Deep Indigo -->
+    <!-- Application Structure Plan: The application is structured as a single-page, multi-section dashboard. This design was chosen over a linear report to enhance user engagement and comprehension. The flow is logical: 1. A high-level overview (the challenge & solution). 2. An interactive data dashboard for exploration. 3. A visual diagram of the automation workflow. 4. A hands-on alert simulator. 5. A new AI Assistant section. 6. Collapsible sections for detailed strategic information. This structure allows users to grasp key concepts quickly, interact with the core data, and then drill down into details as needed, which is a more intuitive and effective user experience for complex project reports. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Sales data by product line, country, and over time. -> Goal: Compare, Analyze Trends. -> Viz/Method: Interactive Bar, Donut, and Line charts (Chart.js on Canvas). -> Interaction: Users can filter data by product line, and all charts update dynamically, enabling cross-analysis. -> Justification: Charts provide immediate visual insights into complex data, far superior to text descriptions.
+        - Report Info: Make.com automation workflow. -> Goal: Organize, Explain Process. -> Viz/Method: Custom process diagram using HTML/CSS (divs, flexbox, borders). -> Interaction: Static visual. -> Justification: A visual flow diagram is more intuitive and easier to understand than a textual list of steps.
+        - Report Info: Alert system prototype. -> Goal: Demonstrate, Engage. -> Viz/Method: Interactive alert generation panel (HTML/CSS/JS). -> Interaction: A button triggers the generation of simulated alerts based on rules applied to sample data. -> Justification: An interactive simulation makes the proposed system's output tangible and understandable.
+        - Report Info: AI Assistant/Chatbot. -> Goal: Demonstrate AI interaction. -> Viz/Method: Text input, button, and response display (HTML/CSS/JS). -> Interaction: User types question, a fetch call is made to the Gemini API, and the AI responds. -> Justification: Provides a direct, interactive example of LLM capabilities.
+        - Report Info: Strategy, Risks, Ethics. -> Goal: Inform, Organize. -> Viz/Method: Collapsible accordion sections (HTML/CSS/JS). -> Interaction: Users can click to expand/collapse detailed text. -> Justification: Accordions present large amounts of text in a clean, organized manner, preventing information overload on the main view.
+     -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            max-height: 40vh;
+        }
+        .flow-step {
+            border: 2px solid #e2e8f0; /* slate-200 */
+            background-color: white;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            flex-grow: 1;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+        .flow-arrow {
+            color: #94a3b8; /* slate-400 */
+            font-size: 2rem;
+            line-height: 1;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .alert-card {
+            transition: opacity 0.3s ease-out, height 0.3s ease-out, margin-bottom 0.3s ease-out, padding 0.3s ease-out;
+        }
+        .ai-chat-box {
+            min-height: 150px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: #f0f4f8;
+        }
+        .user-message {
+            text-align: right;
+            margin-bottom: 0.5rem;
+        }
+        .user-message span {
+            background-color: #a5b4fc;
+            color: #1e3a8a;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            border-bottom-right-radius: 0.25rem;
+            display: inline-block;
+            max-width: 80%;
+        }
+        .ai-message {
+            text-align: left;
+            margin-bottom: 0.5rem;
+        }
+        .ai-message span {
+            background-color: #e0e7ff;
+            color: #2563eb;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            border-bottom-left-radius: 0.25rem;
+            display: inline-block;
+            max-width: 80%;
+        }
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-slate-800">Proyecto IA: Inventario XYZ</h1>
+            <div class="hidden md:flex space-x-6 text-sm font-semibold">
+                <a href="#overview" class="hover:text-indigo-600 transition-colors">Visión General</a>
+                <a href="#dashboard" class="hover:text-indigo-600 transition-colors">Panel de Datos</a>
+                <a href="#workflow" class="hover:text-indigo-600 transition-colors">Flujo Automatizado</a>
+                <a href="#simulator" class="hover:text-indigo-600 transition-colors">Simulador</a>
+                <a href="#ai-assistant" class="hover:text-indigo-600 transition-colors">Asistente IA</a>
+                <a href="#strategy" class="hover:text-indigo-600 transition-colors">Estrategia</a>
+            </div>
+            <div class="md:hidden">
+                 <select onchange="window.location.href=this.value" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    <option value="#overview">Visión General</option>
+                    <option value="#dashboard">Panel de Datos</option>
+                    <option value="#workflow">Flujo</option>
+                    <option value="#simulator">Simulador</option>
+                    <option value="#ai-assistant">Asistente IA</option>
+                    <option value="#strategy">Estrategia</option>
+                </select>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section id="overview" class="mb-24 text-center">
+            <h2 class="text-4xl font-bold text-slate-900 mb-4">Transformando la Gestión de Inventario con IA</h2>
+            <p class="text-lg text-slate-600 max-w-3xl mx-auto mb-12">Una solución estratégica para superar la escasez y el exceso de existencias, optimizando la cadena de suministro de XYZ Retail mediante el análisis de datos y la automatización inteligente.</p>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl mb-3">📉</div>
+                    <h3 class="text-xl font-semibold text-slate-800 mb-2">El Desafío</h3>
+                    <p class="text-sm">Niveles de inventario impredecibles que causan pérdidas de ventas, aumento de costos de almacenamiento y clientes insatisfechos.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-2 border-indigo-500">
+                    <div class="text-3xl mb-3">💡</div>
+                    <h3 class="text-xl font-semibold text-slate-800 mb-2">La Solución de IA</h3>
+                    <p class="text-sm">Usar LLMs para analizar datos de ventas y la plataforma Make.com para automatizar alertas de inventario y reabastecimiento basado en reglas inteligentes.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl mb-3">🚀</div>
+                    <h3 class="text-xl font-semibold text-slate-800 mb-2">Los Beneficios</h3>
+                    <p class="text-sm">Reducción de costos, mejora de la eficiencia operativa, mayor satisfacción del cliente y decisiones basadas en datos accionables.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="dashboard" class="mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Panel de Control Interactivo</h2>
+                <p class="text-lg text-slate-600 max-w-3xl mx-auto">Explore los insights clave del análisis de datos de ventas. Utilice los filtros para ver cómo cambian las tendencias y patrones de compra.</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-8 flex flex-col sm:flex-row gap-4 items-center justify-center">
+                <label for="productLineFilter" class="font-semibold">Filtrar por Línea de Producto:</label>
+                <select id="productLineFilter" class="w-full sm:w-auto rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    <option value="All">Todas las Líneas</option>
+                    <option value="Motorcycles">Motorcycles</option>
+                    <option value="Classic Cars">Classic Cars</option>
+                    <option value="Planes">Planes</option>
+                    <option value="Ships">Ships</option>
+                    <option value="Trains">Trains</option>
+                    <option value="Trucks and Buses">Trucks and Buses</option>
+                    <option value="Vintage Cars">Vintage Cars</option>
+                </select>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">Ventas por Línea de Producto</h3>
+                    <div class="chart-container">
+                        <canvas id="productSalesChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">Tendencia de Ventas Mensuales</h3>
+                    <div class="chart-container">
+                        <canvas id="monthlySalesChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg lg:col-span-2">
+                     <h3 class="text-xl font-semibold text-slate-800 mb-4 text-center">Distribución de Ventas por País</h3>
+                     <div class="chart-container max-w-lg mx-auto">
+                        <canvas id="countrySalesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="workflow" class="mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">El Flujo de Automatización</h2>
+                <p class="text-lg text-slate-600 max-w-3xl mx-auto">Así es como Make.com orquestará el proceso, desde la recopilación de datos hasta la notificación y el reabastecimiento simulado.</p>
+            </div>
+            <div class="bg-white p-8 rounded-xl shadow-lg">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flow-step">
+                        <div class="text-3xl mb-2">⏰</div>
+                        <h4 class="font-bold">1. Disparador</h4>
+                        <p class="text-sm">Se ejecuta diaria o semanalmente</p>
+                    </div>
+                    <div class="flow-arrow transform md:-rotate-90">➔</div>
+                    <div class="flow-step">
+                        <div class="text-3xl mb-2">📊</div>
+                        <h4 class="font-bold">2. Obtener Datos</h4>
+                        <p class="text-sm">Carga las ventas más recientes</p>
+                    </div>
+                     <div class="flow-arrow transform md:-rotate-90">➔</div>
+                    <div class="flow-step">
+                        <div class="text-3xl mb-2">🧠</div>
+                        <h4 class="font-bold">3. Aplicar Reglas</h4>
+                        <p class="text-sm">Evalúa los datos con la lógica de IA</p>
+                    </div>
+                     <div class="flow-arrow transform md:-rotate-90">➔</div>
+                    <div class="flow-step">
+                        <div class="text-3xl mb-2">🔔</div>
+                        <h4 class="font-bold">4. Generar Alertas</h4>
+                        <p class="text-sm">Notifica a gerentes por email/Slack</p>
+                    </div>
+                     <div class="flow-arrow transform md:-rotate-90">➔</div>
+                    <div class="flow-step">
+                        <div class="text-3xl mb-2">📦</div>
+                        <h4 class="font-bold">5. Reordenar</h4>
+                        <p class="text-sm">Simula solicitud a proveedores</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="simulator" class="mb-24">
+            <div class="bg-white p-8 rounded-xl shadow-lg">
+                <div class="text-center">
+                    <h2 class="text-4xl font-bold text-slate-900 mb-4">Simulador de Alertas de Inventario</h2>
+                    <p class="text-lg text-slate-600 max-w-3xl mx-auto mb-8">Haga clic en el botón para ver ejemplos de las alertas que el sistema generaría automáticamente, demostrando cómo se comunican los insights de manera efectiva.</p>
+                    <button id="load-alerts-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors shadow-md">
+                        Cargar Alertas (Simulado)
+                    </button>
+                </div>
+                <div class="flex justify-center mt-6">
+                    <label for="alertTypeFilter" class="font-semibold mr-2">Filtrar por Tipo:</label>
+                    <select id="alertTypeFilter" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <option value="All">Todos</option>
+                        <option value="critical">Críticas</option>
+                        <option value="warning">Advertencias</option>
+                        <option value="info">Información</option>
+                        <option value="success">Éxito</option>
+                    </select>
+                </div>
+                <div id="alerts-container" class="mt-12 space-y-4 max-w-4xl mx-auto">
+                </div>
+            </div>
+        </section>
+
+        <section id="ai-assistant" class="mb-24">
+            <div class="bg-white p-8 rounded-xl shadow-lg">
+                <div class="text-center mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900 mb-4">Asistente de IA (Gemini)</h2>
+                    <p class="text-lg text-slate-600 max-w-3xl mx-auto">Pregunte al asistente de IA sobre los datos de ventas o el inventario. Demuestra cómo un LLM puede proporcionar insights conversacionales.</p>
+                </div>
+                <div class="max-w-3xl mx-auto">
+                    <div id="chat-history" class="ai-chat-box mb-4">
+                        <div class="ai-message"><span>¡Hola! Soy tu asistente de IA para el inventario. Puedes preguntarme sobre las líneas de producto, ventas por país, o cualquier dato de ventas.</span></div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <textarea id="user-question" class="flex-grow p-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Ej: ¿Cuáles son las ventas de motocicletas en USA?"></textarea>
+                        <button id="ask-ai-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors shadow-md flex-shrink-0">
+                            Preguntar a Gemini
+                        </button>
+                    </div>
+                    <div id="ai-response-loading" class="text-center text-slate-500 mt-4 hidden">Cargando respuesta...</div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="strategy" class="mb-12">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Estrategia, Riesgos y Métricas</h2>
+                <p class="text-lg text-slate-600 max-w-3xl mx-auto">Explore los detalles del plan de implementación, las consideraciones éticas, los riesgos potenciales y cómo se medirá el éxito del proyecto.</p>
+            </div>
+            <div class="space-y-4 max-w-4xl mx-auto">
+                <div class="accordion-item bg-white rounded-lg shadow-sm border border-slate-200">
+                    <button class="accordion-header w-full text-left p-4 font-semibold text-slate-800 flex justify-between items-center">
+                        Plan de Implementación de Alto Nivel
+                        <span class="accordion-icon transform transition-transform">▼</span>
+                    </button>
+                    <div class="accordion-content px-4 pb-4">
+                        <p class="text-sm text-slate-600">
+                            <strong>Fase 1: Preparación y Análisis (Semanas 1-3):</strong> Recopilación y limpieza de datos, análisis inicial con LLM y formulación de reglas de alerta.<br>
+                            <strong>Fase 2: Desarrollo y Prototipo (Semanas 4-6):</strong> Diseño e implementación del prototipo de Make.com y la interfaz de alertas.<br>
+                            <strong>Fase 3: Pruebas y Evaluación (Semanas 7-8):</strong> Pruebas exhaustivas, evaluación de riesgos y definición de métricas de éxito.<br>
+                            <strong>Fase 4: Despliegue y Monitoreo (Semanas 9+):</strong> Despliegue piloto, monitoreo continuo y escalado de la solución.
+                        </p>
+                    </div>
+                </div>
+                <div class="accordion-item bg-white rounded-lg shadow-sm border border-slate-200">
+                    <button class="accordion-header w-full text-left p-4 font-semibold text-slate-800 flex justify-between items-center">
+                        Evaluación Ética y de Riesgos
+                        <span class="accordion-icon transform transition-transform">▼</span>
+                    </button>
+                    <div class="accordion-content px-4 pb-4">
+                        <p class="text-sm text-slate-600">
+                            <strong>Sesgo de la IA:</strong> Mitigado mediante auditorías de datos y validación humana de los insights.<br>
+                            <strong>Transparencia:</strong> Asegurada con documentación clara de las reglas y capacitación del personal.<br>
+                            <strong>Precisión de Reglas:</strong> Mitigado con pruebas sobre datos históricos y ajuste iterativo.<br>
+                            <strong>Riesgos de Suministro:</strong> Monitoreo del campo 'STATUS' y diversificación de proveedores como estrategia clave.
+                        </p>
+                    </div>
+                </div>
+                 <div class="accordion-item bg-white rounded-lg shadow-sm border border-slate-200">
+                    <button class="accordion-header w-full text-left p-4 font-semibold text-slate-800 flex justify-between items-center">
+                        Métricas Clave de Éxito (KPIs)
+                        <span class="accordion-icon transform transition-transform">▼</span>
+                    </button>
+                    <div class="accordion-content px-4 pb-4">
+                        <p class="text-sm text-slate-600">
+                            <strong>1. Tasa de Rotación de Inventario:</strong> Medir cuántas veces el inventario se vende y repone. Se espera un aumento.<br>
+                            <strong>2. Reducción de Costos:</strong> Cuantificar ahorros en almacenamiento y pérdidas por obsolescencia.<br>
+                            <strong>3. Mejora de la Eficiencia:</strong> Medir la tasa de cumplimiento de pedidos y la reducción de falta de existencias (stock-outs).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-slate-300 text-center py-6">
+        <p>&copy; 2025 Proyecto de IA para XYZ Retail. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+    const salesData = [
+        { "QUANTITYORDERED": 30, "PRICEEACH": 95.70, "ORDERDATE": "2023-02-24", "PRODUCTLINE": "Motorcycles", "COUNTRY": "USA", "STATUS": "Shipped", "PRODUCTCODE": "S10_1678" },
+        { "QUANTITYORDERED": 34, "PRICEEACH": 81.35, "ORDERDATE": "2023-05-07", "PRODUCTLINE": "Classic Cars", "COUNTRY": "France", "STATUS": "Shipped", "PRODUCTCODE": "S18_2248" },
+        { "QUANTITYORDERED": 41, "PRICEEACH": 94.74, "ORDERDATE": "2023-07-24", "PRODUCTLINE": "Motorcycles", "COUNTRY": "USA", "STATUS": "Shipped", "PRODUCTCODE": "S10_1678" },
+        { "QUANTITYORDERED": 22, "PRICEEACH": 98.57, "ORDERDATE": "2023-08-25", "PRODUCTLINE": "Classic Cars", "COUNTRY": "USA", "STATUS": "On Hold", "PRODUCTCODE": "S18_2248" },
+        { "QUANTITYORDERED": 49, "PRICEEACH": 100.00, "ORDERDATE": "2023-10-10", "PRODUCTLINE": "Motorcycles", "COUNTRY": "UK", "STATUS": "Shipped", "PRODUCTCODE": "S10_1678" },
+        { "QUANTITYORDERED": 36, "PRICEEACH": 96.66, "ORDERDATE": "2023-10-28", "PRODUCTLINE": "Ships", "COUNTRY": "Germany", "STATUS": "Disputed", "PRODUCTCODE": "S700_2824" },
+        { "QUANTITYORDERED": 29, "PRICEEACH": 86.13, "ORDERDATE": "2023-11-06", "PRODUCTLINE": "Trucks and Buses", "COUNTRY": "France", "STATUS": "Shipped", "PRODUCTCODE": "S700_2824" },
+        { "QUANTITYORDERED": 48, "PRICEEACH": 100.00, "ORDERDATE": "2023-11-14", "PRODUCTLINE": "Planes", "COUNTRY": "USA", "STATUS": "Shipped", "PRODUCTCODE": "S700_2824" },
+        { "QUANTITYORDERED": 2, "PRICEEACH": 76.23, "ORDERDATE": "2023-12-01", "PRODUCTLINE": "Trains", "COUNTRY": "Germany", "STATUS": "Shipped", "PRODUCTCODE": "S24_3949" },
+        { "QUANTITYORDERED": 55, "PRICEEACH": 100.00, "ORDERDATE": "2024-02-11", "PRODUCTLINE": "Motorcycles", "COUNTRY": "USA", "STATUS": "Shipped", "PRODUCTCODE": "S10_1678" },
+        { "QUANTITYORDERED": 21, "PRICEEACH": 94.34, "ORDERDATE": "2024-03-01", "PRODUCTLINE": "Classic Cars", "COUNTRY": "France", "STATUS": "Shipped", "PRODUCTCODE": "S18_2248" },
+        { "QUANTITYORDERED": 46, "PRICEEACH": 94.49, "ORDERDATE": "2024-05-21", "PRODUCTLINE": "Ships", "COUNTRY": "Australia", "STATUS": "Shipped", "PRODUCTCODE": "S700_2824" },
+        { "QUANTITYORDERED": 25, "PRICEEACH": 85.19, "ORDERDATE": "2024-07-06", "PRODUCTLINE": "Vintage Cars", "COUNTRY": "USA", "STATUS": "Shipped", "PRODUCTCODE": "S700_2824" }
+    ];
+
+    let productSalesChart, monthlySalesChart, countrySalesChart;
+
+    function processData(filter) {
+        const filteredData = salesData.filter(d => filter === 'All' || d.PRODUCTLINE === filter);
+        const productSales = {};
+        const monthlySales = {};
+        const countrySales = {};
+        filteredData.forEach(d => {
+            const saleValue = d.QUANTITYORDERED * d.PRICEEACH;
+            productSales[d.PRODUCTLINE] = (productSales[d.PRODUCTLINE] || 0) + saleValue;
+            const date = new Date(d.ORDERDATE);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            monthlySales[monthKey] = (monthlySales[monthKey] || 0) + saleValue;
+            countrySales[d.COUNTRY] = (countrySales[d.COUNTRY] || 0) + saleValue;
+        });
+        const sortedMonths = Object.keys(monthlySales).sort();
+        const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+        const monthlyLabels = sortedMonths.map(key => {
+            const [year, month] = key.split('-');
+            return `${monthNames[parseInt(month) - 1]} '${year.slice(2)}`;
+        });
+        const monthlyData = sortedMonths.map(key => monthlySales[key]);
+        return { productSales, monthlyLabels, monthlyData, countrySales };
+    }
+
+    function createCharts() {
+        const initialData = processData('All');
+        const commonOptions = { responsive: true, maintainAspectRatio: false };
+        const psCtx = document.getElementById('productSalesChart').getContext('2d');
+        productSalesChart = new Chart(psCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(initialData.productSales),
+                datasets: [{ label: 'Ventas Totales', data: Object.values(initialData.productSales), backgroundColor: 'rgba(79, 70, 229, 0.7)' }]
+            },
+            options: commonOptions
+        });
+        const msCtx = document.getElementById('monthlySalesChart').getContext('2d');
+        monthlySalesChart = new Chart(msCtx, {
+            type: 'line',
+            data: {
+                labels: initialData.monthlyLabels,
+                datasets: [{ label: 'Ventas Mensuales', data: initialData.monthlyData, fill: true, borderColor: 'rgba(79, 70, 229, 1)', backgroundColor: 'rgba(79, 70, 229, 0.1)', tension: 0.3 }]
+            },
+            options: commonOptions
+        });
+        const csCtx = document.getElementById('countrySalesChart').getContext('2d');
+        countrySalesChart = new Chart(csCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(initialData.countrySales),
+                datasets: [{ data: Object.values(initialData.countrySales), backgroundColor: ['#4f46e5', '#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff'] }]
+            },
+            options: commonOptions
+        });
+    }
+
+    function updateCharts(filter) {
+        const newData = processData(filter);
+        productSalesChart.data.labels = Object.keys(newData.productSales);
+        productSalesChart.data.datasets[0].data = Object.values(newData.productSales);
+        productSalesChart.update();
+        monthlySalesChart.data.labels = newData.monthlyLabels;
+        monthlySalesChart.data.datasets[0].data = newData.monthlyData;
+        monthlySalesChart.update();
+        countrySalesChart.data.labels = Object.keys(newData.countrySales);
+        countrySalesChart.data.datasets[0].data = Object.values(newData.countrySales);
+        countrySalesChart.update();
+    }
+    
+    document.getElementById('productLineFilter').addEventListener('change', (e) => updateCharts(e.target.value));
+
+    document.querySelectorAll('.accordion-header').forEach(button => {
+        button.addEventListener('click', () => {
+            const accordionContent = button.nextElementSibling;
+            const accordionIcon = button.querySelector('.accordion-icon');
+            const isOpen = accordionContent.style.maxHeight && accordionContent.style.maxHeight !== '0px';
+            accordionContent.style.maxHeight = isOpen ? '0' : accordionContent.scrollHeight + 'px';
+            accordionIcon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+        });
+    });
+
+    let currentSimulatedAlerts = [];
+
+    function loadSimulatedAlerts() {
+        currentSimulatedAlerts = [];
+        salesData.forEach(sale => {
+            let alert = null;
+            if (sale.PRODUCTLINE === 'Motorcycles' && sale.COUNTRY === 'USA' && sale.QUANTITYORDERED > 50) {
+                alert = { type: 'critical', title: `Alta Demanda: ${sale.PRODUCTLINE}`, message: `Pico de ${sale.QUANTITYORDERED} unidades en ${sale.COUNTRY}.`, productCode: sale.PRODUCTCODE, productLine: sale.PRODUCTLINE, country: sale.COUNTRY };
+            } else if (sale.STATUS === 'On Hold' || sale.STATUS === 'Disputed') {
+                alert = { type: 'warning', title: `Envío ${sale.STATUS}`, message: `Pedido de ${sale.PRODUCTLINE} en ${sale.COUNTRY} en espera.`, productCode: sale.PRODUCTCODE, productLine: sale.PRODUCTLINE, country: sale.COUNTRY };
+            } else if (sale.PRODUCTLINE === 'Trains' && sale.QUANTITYORDERED < 5) {
+                alert = { type: 'info', title: `Baja Demanda: ${sale.PRODUCTLINE}`, message: `Ventas de ${sale.QUANTITYORDERED} unidades. Considerar reducir stock.`, productCode: sale.PRODUCTCODE, productLine: sale.PRODUCTLINE, country: sale.COUNTRY };
+            }
+            if (alert) currentSimulatedAlerts.push(alert);
+        });
+        filterAlerts();
+    }
+
+    function filterAlerts() {
+        const selectedType = document.getElementById('alertTypeFilter').value;
+        const alertsContainer = document.getElementById('alerts-container');
+        alertsContainer.innerHTML = '';
+        const filtered = selectedType === 'All' ? currentSimulatedAlerts : currentSimulatedAlerts.filter(alert => alert.type === selectedType);
+        const alertStyles = {
+            critical: { bg: 'bg-red-100', border: 'border-red-500', icon: '🚨' },
+            warning: { bg: 'bg-yellow-100', border: 'border-yellow-500', icon: '⚠️' },
+            info: { bg: 'bg-blue-100', border: 'border-blue-500', icon: 'ℹ️' },
+            success: { bg: 'bg-green-100', border: 'border-green-500', icon: '✅' },
+        };
+        if (filtered.length === 0) {
+            alertsContainer.innerHTML = '<p class="text-center text-slate-600">No hay alertas con el filtro actual.</p>';
+            return;
+        }
+        filtered.forEach((alert, index) => {
+            const styles = alertStyles[alert.type];
+            const alertId = `alert-${index}`;
+            alertsContainer.innerHTML += `
+                <div id="${alertId}" class="alert-card ${styles.bg} border-l-4 ${styles.border} p-4 rounded-r-lg flex items-start gap-4 shadow-sm">
+                    <span class="text-2xl">${styles.icon}</span>
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-slate-800">${alert.title}</h4>
+                        <p class="text-sm text-slate-600">${alert.message}</p>
+                        <p class="text-xs text-slate-500 mt-1">Prod: ${alert.productCode}</p>
+                    </div>
+                    <button onclick="resolveAlert('${alertId}')" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-1 px-3 rounded-full transition-colors">Resolver</button>
+                </div>`;
+        });
+    }
+
+    window.resolveAlert = function(alertElementId) {
+        const alertElement = document.getElementById(alertElementId);
+        if (alertElement) {
+            alertElement.style.opacity = '0';
+            setTimeout(() => alertElement.remove(), 300);
+        }
+    }
+    
+    document.getElementById('load-alerts-btn').addEventListener('click', loadSimulatedAlerts);
+    document.getElementById('alertTypeFilter').addEventListener('change', filterAlerts);
+
+    document.getElementById('ask-ai-btn').addEventListener('click', async () => {
+        const userQuestionInput = document.getElementById('user-question');
+        const userQuestion = userQuestionInput.value.trim();
+        const chatHistoryDiv = document.getElementById('chat-history');
+        const loadingIndicator = document.getElementById('ai-response-loading');
+
+        if (!userQuestion) return;
+
+        chatHistoryDiv.innerHTML += `<div class="user-message"><span>${userQuestion}</span></div>`;
+        userQuestionInput.value = '';
+        chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
+        loadingIndicator.classList.remove('hidden');
+
+        try {
+            const dataSummary = JSON.stringify(salesData);
+            const prompt = `Eres un asistente de IA para la gestión de inventario. Aquí hay datos de ventas recientes: ${dataSummary}. Responde a la siguiente pregunta del usuario de forma concisa, usando los datos si es relevante: "${userQuestion}"`;
+            
+            const apiKey = "AIzaSyB4YVUrHqVAZBTT_EAteE85Ye-ugNuGWD4"; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+            
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+
+            if (!response.ok) {
+                const errorResult = await response.json();
+                throw new Error(errorResult.error.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            const aiResponseText = result.candidates[0].content.parts[0].text;
+            chatHistoryDiv.innerHTML += `<div class="ai-message"><span>${aiResponseText}</span></div>`;
+
+        } catch (error) {
+            console.error("Error calling Gemini API:", error);
+            chatHistoryDiv.innerHTML += `<div class="ai-message"><span>Lo siento, hubo un error al conectar con el asistente. (Detalle: ${error.message})</span></div>`;
+        } finally {
+            loadingIndicator.classList.add('hidden');
+            chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        createCharts();
+        loadSimulatedAlerts(); 
+    });
+    </script>
+</body>
+</html>
+
